@@ -1,7 +1,8 @@
-自定义Jmeter的FTP测试
+自定义Jmeter测试组件
 -------------------
 
 # 使用方法
+以ftp测试为例
 
 ```mvn clean package``` 
 
