@@ -1,0 +1,4 @@
+# Project exclude paths
+/ftp-sample/target/
+/influxdb-sample/target/
+/jmeter-common/target/
