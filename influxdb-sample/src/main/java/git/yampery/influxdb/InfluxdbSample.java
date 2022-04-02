@@ -6,29 +6,27 @@ import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.WriteApi;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.query.FluxTable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.java.sampler.AbstractJavaSamplerClient;
 import org.apache.jmeter.protocol.java.sampler.JavaSamplerContext;
 import org.apache.jmeter.samplers.SampleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 /**
- *
  * <p>Influxdb2.0 测试取样器
- *      1. 初始化参数
- *      2. 根据参数初始化安装应用
- *      3. 执行测试
- *      4. 测试结束，释放资源
+ * 1. 初始化参数
+ * 2. 根据参数初始化安装应用
+ * 3. 执行测试
+ * 4. 测试结束，释放资源
  * </p>
+ *
  * @author Yampery
  * @date 2019/3/22 19:44
  */
+@Slf4j
 public class InfluxdbSample extends AbstractJavaSamplerClient {
-
-    Logger logger = LoggerFactory.getLogger(InfluxdbSample.class);
 
     private static final String WRITE_OPT = "write";
     private static final String QUERY_OPT = "query";
@@ -37,11 +35,12 @@ public class InfluxdbSample extends AbstractJavaSamplerClient {
 
     /**
      * 初始化参数
+     *
      * @return Arguments
      */
     @Override
     public Arguments getDefaultParameters() {
-        logger.info("Get default parameters");
+        log.info("Get default parameters");
         Arguments arguments = new Arguments();
         arguments.addArgument("protocol", "http");
         arguments.addArgument("host", "localhost");
@@ -66,7 +65,7 @@ public class InfluxdbSample extends AbstractJavaSamplerClient {
 
         String url = String.format("%s://%s:%s", protocol, host, port);
         client = InfluxDBClientFactory.create(url, token.toCharArray());
-        logger.info("Connection：{}", url);
+        log.info("Connection：{}", url);
     }
 
     @Override
@@ -80,7 +79,7 @@ public class InfluxdbSample extends AbstractJavaSamplerClient {
         String data = context.getParameter("data");
         try {
             if (opt.equals(WRITE_OPT)) {
-                WriteApi writeApi = client.getWriteApi();
+                WriteApi writeApi = client.makeWriteApi();
                 writeApi.writeRecord(bucket, org, WritePrecision.NS, data);
             } else if (opt.equals(QUERY_OPT)) {
                 List<FluxTable> tables = client.getQueryApi().query(data, org);
@@ -91,7 +90,7 @@ public class InfluxdbSample extends AbstractJavaSamplerClient {
             }
             results.setSuccessful(true);
         } catch (Exception e) {
-            logger.error("Error", e);
+            log.error("Error", e);
             results.setSuccessful(false);
         }
         results.sampleEnd();
@@ -104,12 +103,25 @@ public class InfluxdbSample extends AbstractJavaSamplerClient {
     @Override
     public void teardownTest(JavaSamplerContext context) {
         client.close();
-        logger.info("关闭连接");
+        log.info("关闭连接");
     }
 
     public static void main(String[] args) {
-        String query = String.format("from(bucket: \"%s\") |> range(start: -1h)", "bucket");
-        List<FluxTable> tables = client.getQueryApi().query(query, "org");
+        String token = "qzga4o81OGuT1R-626zwba_mrm4ZYMkPXOuCMm82Ap2A96kT5hXjb0XaQaTW8nndLv8vHvu8WF0L1hOvmF4qUg==";
+        client = InfluxDBClientFactory.create("http://192.168.0.128:48086", token.toCharArray());
+        String query = QueryBuilder
+                .builder()
+                .bucket("ds_cloud")
+                .sort(QueryBuilder.TIME)
+                .start("-30d")
+
+                .stop("1d")
+                .measurement("computer")
+                .field("Ramp10")
+                .page(10, 0)
+                .build();
+        System.out.println(query);
+        List<FluxTable> tables = client.getQueryApi().query(query, "dongsenyun");
         System.out.println(JSON.toJSONString(tables));
     }
 }

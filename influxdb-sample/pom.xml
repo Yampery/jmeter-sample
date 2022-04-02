@@ -22,6 +22,10 @@
             <groupId>com.influxdb</groupId>
             <artifactId>influxdb-client-java</artifactId>
         </dependency>
+        <!--<dependency>
+            <groupId>com.influxdb</groupId>
+            <artifactId>influxdb-client-flux</artifactId>
+        </dependency>-->
     </dependencies>
     <build>
         <finalName>${project.artifactId}-${project.version}</finalName>
